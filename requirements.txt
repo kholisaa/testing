@@ -1,4 +1,4 @@
 streamlit
-torch==2.0.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
+torch
 open3d==0.17.0
-numpy<2.0.0
+numpy==1.26.4
