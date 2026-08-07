@@ -47,11 +47,11 @@ class SimplePointNet(nn.Module):
 # ==========================================
 # 2. TAMPILAN WEB & PROSES PREDIKSI
 # ==========================================
-st.title("🚀 Inspektur Wadah 3D AI")
-st.write("Upload file .pcd kamu di sini untuk dianalisis otomatis!")
+st.title("Validasi 🛻")
+st.write("Upload file merge (.pcd)")
 
 password = st.sidebar.text_input("Masukkan Password", type="password")
-if password != "wadahaman123":
+if password != "abc123":
     st.warning("Silakan masukkan password di menu sebelah kiri untuk mengakses AI.")
     st.stop()
 
@@ -117,13 +117,13 @@ if uploaded_file is not None:
         top_1_kelas = skor_per_kelas[0][0]
 
         if top_1_kelas.lower() == "valid":
-            st.success(f"✅ Barang ini Valid Sempurna! (Keyakinan: {skor_per_kelas[0][1]:.2f}%)")
+            st.success(f"✅ Valid")
         else:
             st.error("⚠️ Peringatan: Barang terdeteksi CACAT dengan alasan berikut:")
             for nama_kelas, skor in skor_per_kelas:
                 # Tampilkan semua dugaan cacat yang peluangnya di atas 15%
                 if nama_kelas.lower() != "valid" and skor >= 15.0:
-                    st.write(f"- **{nama_kelas}** (Confidence: {skor:.2f}%)")
+                    st.write(f"- **{nama_kelas}**")
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses: {e}")
