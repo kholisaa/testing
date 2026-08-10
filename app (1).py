@@ -112,12 +112,12 @@ class DGCNN_MultiLabel(nn.Module):
 # 3. TAMPILAN WEB & PROSES PREDIKSI
 # ==========================================
 st.set_page_config(page_title="Scanner Wadah 3D", page_icon="🛻")
-st.title("Scanner Kualitas Wadah 3D 🛻")
-st.write("Upload file mentah (.pcd) untuk mendeteksi berbagai jenis cacat sekaligus.")
+st.title("Validasi 🛻")
+st.write("Upload file mentah (.pcd)")
 
 password = st.sidebar.text_input("Masukkan Password", type="password")
 if password != "abc123":
-    st.warning("Silakan masukkan password di menu sebelah kiri untuk mengakses AI.")
+    st.warning("Silakan masukkan password di menu sebelah kiri")
     st.stop()
 
 uploaded_file = st.file_uploader("Pilih file .pcd", type=['pcd'])
@@ -127,7 +127,7 @@ if uploaded_file is not None:
         tmp.write(uploaded_file.getvalue())
         tmp_path = tmp.name
 
-    st.info("🔄 AI sedang memproses dan memindai file 3D... (Harap tunggu beberapa detik)")
+    st.info("🔄 sedang memproses dan memindai file 3D... (Harap tunggu beberapa detik)")
 
     try:
         device = torch.device("cpu")
@@ -181,7 +181,7 @@ if uploaded_file is not None:
             # UBAH JADI SIGMOID (Karena Multi-Label)
             probs = torch.sigmoid(prediksi).squeeze() * 100
 
-        st.subheader("📊 Hasil Analisis AI:")
+        st.subheader("📊 Hasil Analisis:")
         
         skor_per_kelas = [(classes[i], probs[i].item()) for i in range(len(classes))]
         # Urutkan dari persentase terbesar
@@ -205,7 +205,7 @@ if uploaded_file is not None:
         if len(cacat_ditemukan) > 0:
             st.error(f"🚨 KESIMPULAN: Wadah ini **CACAT**. Terdapat {len(cacat_ditemukan)} masalah yang ditemukan!")
         elif is_valid or len(cacat_ditemukan) == 0:
-            st.success("✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan!")
+            st.success("✅ KESIMPULAN: Wadah ini **NORMAL / VALID**!")
 
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses: {e}")
