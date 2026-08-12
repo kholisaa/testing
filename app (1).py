@@ -147,7 +147,7 @@ if uploaded_file is not None:
         model.eval()
 
         # ==========================================
-        # 4. PREPROCESSING OTOMATIS (Jadi 2048 Titik)
+        # 4. PREPROCESSING OTOMATIS
         # ==========================================
         pcd = o3d.io.read_point_cloud(tmp_path)
         points = np.asarray(pcd.points)
@@ -174,39 +174,72 @@ if uploaded_file is not None:
         points_tensor = torch.tensor(points, dtype=torch.float32).transpose(0, 1).unsqueeze(0).to(device)
 
         # ==========================================
-        # 5. PREDIKSI MULTI-LABEL DENGAN SIGMOID
+        # 5. PREDIKSI MULTI-LABEL
+        # ==========================================
+        # ==========================================
+        # 5. PREDIKSI MULTI-LABEL SESUAI ATURAN BARU
         # ==========================================
         with torch.no_grad():
             prediksi = model(points_tensor)
-            # UBAH JADI SIGMOID (Karena Multi-Label)
             probs = torch.sigmoid(prediksi).squeeze() * 100
 
-        st.subheader("📊 Hasil Analisis:")
+        st.subheader("📊 Hasil Analisis AI:")
         
+        # Urutkan semua skor per kelas dari terbesar ke terkecil
         skor_per_kelas = [(classes[i], probs[i].item()) for i in range(len(classes))]
-        # Urutkan dari persentase terbesar
         skor_per_kelas.sort(key=lambda x: x[1], reverse=True)
 
-        cacat_ditemukan = []
-        is_valid = False
+        # Cari skor khusus kelas 'Valid'
+        skor_valid = 0.0
+        for nama, skor in skor_per_kelas:
+            if "valid" in nama.lower():
+                skor_valid = skor
+                break
 
-        # Tampilkan Progress Bar untuk semua kelas
+        # Ambil daftar khusus kelas Cacat saja (mengabaikan kelas 'Valid')
+        cacat_list = [(nama, skor) for nama, skor in skor_per_kelas if "valid" not in nama.lower()]
+
+        # Tampilkan persentase semua kelas
         for nama_kelas, skor in skor_per_kelas:
-            if skor >= 50.0:  # Threshold 50%
-                st.warning(f"Terdeteksi: **{nama_kelas}** ({skor:.1f}%)")
-                if "valid" not in nama_kelas.lower():
-                    cacat_ditemukan.append(nama_kelas)
-                else:
-                    is_valid = True
+            if "valid" in nama_kelas.lower():
+                st.info(f"Tingkat Keabsahan (**{nama_kelas}**): {skor:.1f}%")
             else:
-                st.success(f"Aman dari: **{nama_kelas}** ({skor:.1f}%)")
+                st.write(f"- **{nama_kelas}**: {skor:.1f}%")
 
         st.markdown("---")
-        if len(cacat_ditemukan) > 0:
-            st.error(f"🚨 KESIMPULAN: Wadah ini **CACAT**. Terdapat {len(cacat_ditemukan)} masalah yang ditemukan!")
-        elif is_valid or len(cacat_ditemukan) == 0:
-            st.success("✅ KESIMPULAN: Wadah ini **NORMAL / VALID**!")
 
+        # ==========================================
+        # LOGIKA KESIMPULAN BARU
+        # ==========================================
+        
+        # ATURAN 1: Kalau Valid >= 80%, MUTLAK VALID!
+        if skor_valid >= 80.0:
+            st.success("✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan!")
+            
+            # Catatan informasi saja kalau ada indikasi cacat tipis (TIDAK mempengaruhi status Valid)
+            cacat_tipis = [f"{nama} ({skor:.1f}%)" for nama, skor in cacat_list if skor >= 20.0]
+            if cacat_tipis:
+                st.caption(f"ℹ️ *Catatan Indikasi Tipis (Sifatnya hanya informasi): {', '.join(cacat_tipis)}*")
+
+        else:
+            # ATURAN 2 & 3: Jika Valid < 80% -> Maka KESIMPULAN ADALAH CACAT / INVALID
+            st.error("⚠️ KESIMPULAN: Wadah ini **CACAT / INVALID**!")
+            
+            # Cek apakah ada cacat yang tembus >= 50%
+            cacat_tinggi = [(nama, skor) for nama, skor in cacat_list if skor >= 50.0]
+
+            if len(cacat_tinggi) > 0:
+                # ATURAN 2: Tampilkan semua cacat yang tembus >= 50%
+                st.write("Alasan Cacat Terdeteksi (Skor Dominan):")
+                for nama, skor in cacat_tinggi:
+                    st.write(f"🚨 **{nama}** ({skor:.1f}%)")
+
+            else:
+                # ATURAN 3: Jika tidak ada cacat yang tembus 50%, ambil Top 2 cacat tertinggi
+                top_2_cacat = cacat_list[:2]
+                st.write("Alasan Cacat Terdeteksi (Top 2 Dugaan Tertinggi):")
+                for nama, skor in top_2_cacat:
+                    st.write(f"🚨 **{nama}** ({skor:.1f}%)")
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses: {e}")
     finally:
