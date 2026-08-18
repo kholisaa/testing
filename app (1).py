@@ -209,30 +209,31 @@ if uploaded_file is not None:
         st.markdown("---")
 
         # ==========================================
-        # LOGIKA KESIMPULAN BARU
+        # LOGIKA KESIMPULAN
         # ==========================================
-        
-        # ATURAN 1: Kalau Valid >= 80%, MUTLAK VALID!
-        if skor_valid >= 80.0:
-            st.success("✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan!")
-            
-            # Catatan informasi saja kalau ada indikasi cacat tipis (TIDAK mempengaruhi status Valid)
-            cacat_tipis = [f"{nama} ({skor:.1f}%)" for nama, skor in cacat_list if skor >= 20.0]
-            if cacat_tipis:
-                st.caption(f"ℹ️ *Catatan Indikasi Tipis (Sifatnya hanya informasi): {', '.join(cacat_tipis)}*")
+        top_1_nama, top_1_skor = skor_per_kelas[0]
 
+        # KONDISI 1: JIKA PERINGKAT 1 ADALAH VALID -> MUTLAK VALID!
+        if "valid" in top_1_nama.lower():
+            st.success(f"✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan! (Tingkat Keyakinan: {top_1_skor:.1f}%)")
+            
+            # Catatan sampingan jika ada dugaan cacat lain (hanya info, tidak merusak status Valid)
+            cacat_info = [f"{nama} ({skor:.1f}%)" for nama, skor in cacat_list if skor >= 20.0]
+            if cacat_info:
+                st.caption(f"ℹ️ *Catatan Tambahan: Ada indikasi kecil {', '.join(cacat_info)}, tapi status utama tetap VALID.*")
+
+        # KONDISI 2: JIKA PERINGKAT 1 ADALAH CACAT -> MUTLAK CACAT!
         else:
-            # ATURAN 2 & 3: Jika Valid < 80% -> Maka KESIMPULAN ADALAH CACAT / INVALID
             st.error("⚠️ KESIMPULAN: Wadah ini **CACAT / INVALID**!")
             
-            # Cek apakah ada cacat yang tembus >= 50%
-            cacat_tinggi = [(nama, skor) for nama, skor in cacat_list if skor >= 50.0]
+            # Tampilkan 1 atau 2 alasan cacat yang paling tinggi nilainya
+            top_cacat = [item for item in cacat_list if item[1] >= 20.0][:2]
+            if not top_cacat:
+                top_cacat = cacat_list[:1]  # Minimal tampilkan peringkat 1 nya
 
-            if len(cacat_tinggi) > 0:
-                # ATURAN 2: Tampilkan semua cacat yang tembus >= 50%
-                st.write("Alasan Cacat Terdeteksi (Skor Dominan):")
-                for nama, skor in cacat_tinggi:
-                    st.write(f"🚨 **{nama}** ({skor:.1f}%)")
+            st.write("Alasan Cacat Terdeteksi (Dugaan Tertinggi):")
+            for nama, skor in top_cacat:
+                st.write(f"🚨 **{nama}** ({skor:.1f}%)")
 
             else:
                 # ATURAN 3: Jika tidak ada cacat yang tembus 50%, ambil Top 2 cacat tertinggi
