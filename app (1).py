@@ -133,7 +133,7 @@ if uploaded_file is not None:
         device = torch.device("cpu")
         
         # 🚨 PASTIKAN NAMA FILE PTH INI SAMA DENGAN HASIL TRAINING TERAKHIRMU!
-        checkpoint = torch.load("best_model_multilabell.pth", map_location=device)
+        checkpoint = torch.load("best_model_fix.pth", map_location=device)
         
         if isinstance(checkpoint, dict) and "classes" in checkpoint:
             classes = checkpoint["classes"]
