@@ -176,9 +176,7 @@ if uploaded_file is not None:
         # ==========================================
         # 5. PREDIKSI MULTI-LABEL
         # ==========================================
-        # ==========================================
-        # 5. PREDIKSI MULTI-LABEL SESUAI ATURAN BARU
-        # ==========================================
+
         with torch.no_grad():
             prediksi = model(points_tensor)
             probs = torch.sigmoid(prediksi).squeeze() * 100
@@ -211,36 +209,38 @@ if uploaded_file is not None:
         # ==========================================
         # LOGIKA KESIMPULAN
         # ==========================================
+       # ==========================================
+        # LOGIKA KESIMPULAN (SELEKTIF & PROPORSIONAL)
+        # ==========================================
         top_1_nama, top_1_skor = skor_per_kelas[0]
 
-        # KONDISI 1: JIKA PERINGKAT 1 ADALAH VALID -> MUTLAK VALID!
+        # KONDISI 1: JIKA JUARA 1 ADALAH VALID -> MUTLAK VALID
         if "valid" in top_1_nama.lower():
-            st.success(f"✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan! (Tingkat Keyakinan: {top_1_skor:.1f}%)")
+            st.success(f"✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan! (Keyakinan: {top_1_skor:.1f}%)")
             
-            # Catatan sampingan jika ada dugaan cacat lain (hanya info, tidak merusak status Valid)
+            # Catatan jika ada indikasi kecil (hanya info tambahan)
             cacat_info = [f"{nama} ({skor:.1f}%)" for nama, skor in cacat_list if skor >= 20.0]
             if cacat_info:
-                st.caption(f"ℹ️ *Catatan Tambahan: Ada indikasi kecil {', '.join(cacat_info)}, tapi status utama tetap VALID.*")
+                st.caption(f"ℹ️ *Catatan: Ada indikasi kecil {', '.join(cacat_info)}, tapi status utama tetap VALID.*")
 
-        # KONDISI 2: JIKA PERINGKAT 1 ADALAH CACAT -> MUTLAK CACAT!
+        # KONDISI 2: JIKA JUARA 1 ADALAH CACAT -> MUTLAK CACAT
         else:
             st.error("⚠️ KESIMPULAN: Wadah ini **CACAT / INVALID**!")
             
-            # Tampilkan 1 atau 2 alasan cacat yang paling tinggi nilainya
-            top_cacat = [item for item in cacat_list if item[1] >= 20.0][:2]
-            if not top_cacat:
-                top_cacat = cacat_list[:1]  # Minimal tampilkan peringkat 1 nya
-
-            st.write("Alasan Cacat Terdeteksi (Dugaan Tertinggi):")
-            for nama, skor in top_cacat:
-                st.write(f"🚨 **{nama}** ({skor:.1f}%)")
-
+            # Cek apakah ada cacat yang beneran dominan (>= 50%)
+            cacat_dominan = [item for item in cacat_list if item[1] >= 50.0]
+            
+            if len(cacat_dominan) > 0:
+                # JIKA ADA CACAT DOMINAN: Tampilkan HANYA yang tembus >= 50%
+                st.write("Alasan Cacat Terdeteksi (Sangat Jelas):")
+                for nama_cacat, skor_cacat in cacat_dominan:
+                    st.write(f"🚨 **{nama_cacat}** ({skor_cacat:.1f}%)")
             else:
-                # ATURAN 3: Jika tidak ada cacat yang tembus 50%, ambil Top 2 cacat tertinggi
+                # JIKA TIDAK ADA YANG TEMBUS 50%: Ambil Top 2 dugaan tertinggi
                 top_2_cacat = cacat_list[:2]
-                st.write("Alasan Cacat Terdeteksi (Top 2 Dugaan Tertinggi):")
-                for nama, skor in top_2_cacat:
-                    st.write(f"🚨 **{nama}** ({skor:.1f}%)")
+                st.write("Alasan Cacat Terdeteksi (Dugaan Tertinggi):")
+                for nama_cacat, skor_cacat in top_2_cacat:
+                    st.write(f"🚨 **{nama_cacat}** ({skor_cacat:.1f}%)")
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses: {e}")
     finally:
