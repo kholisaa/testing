@@ -209,9 +209,6 @@ if uploaded_file is not None:
         # ==========================================
         # LOGIKA KESIMPULAN
         # ==========================================
-       # ==========================================
-        # LOGIKA KESIMPULAN (SELEKTIF & PROPORSIONAL)
-        # ==========================================
         top_1_nama, top_1_skor = skor_per_kelas[0]
 
         # KONDISI 1: JIKA JUARA 1 ADALAH VALID -> MUTLAK VALID
@@ -228,7 +225,7 @@ if uploaded_file is not None:
             st.error("⚠️ KESIMPULAN: Wadah ini **CACAT / INVALID**!")
             
             # Cek apakah ada cacat yang beneran dominan (>= 50%)
-            cacat_dominan = [item for item in cacat_list if item[1] >= 50.0]
+            cacat_dominan = [item for item in cacat_list if item[1] >= 60.0]
             
             if len(cacat_dominan) > 0:
                 # JIKA ADA CACAT DOMINAN: Tampilkan HANYA yang tembus >= 50%
