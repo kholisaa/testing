@@ -113,7 +113,7 @@ class DGCNN_MultiLabel(nn.Module):
 # ==========================================
 st.set_page_config(page_title="Scanner Wadah 3D", page_icon="🛻")
 st.title("Validasi 🛻")
-st.write("Upload file mentah (.pcd)")
+st.write("Upload file merge (.pcd)")
 
 password = st.sidebar.text_input("Masukkan Password", type="password")
 if password != "abc123":
@@ -211,33 +211,27 @@ if uploaded_file is not None:
         # ==========================================
         top_1_nama, top_1_skor = skor_per_kelas[0]
 
-        # KONDISI 1: JIKA JUARA 1 ADALAH VALID -> MUTLAK VALID
+        # KONDISI 1: JIKA PERINGKAT 1 ADALAH VALID
         if "valid" in top_1_nama.lower():
-            st.success(f"✅ KESIMPULAN: Wadah ini **NORMAL / VALID** dan siap digunakan! (Keyakinan: {top_1_skor:.1f}%)")
-            
-            # Catatan jika ada indikasi kecil (hanya info tambahan)
-            cacat_info = [f"{nama} ({skor:.1f}%)" for nama, skor in cacat_list if skor >= 20.0]
-            if cacat_info:
-                st.caption(f"ℹ️ *Catatan: Ada indikasi kecil {', '.join(cacat_info)}, tapi status utama tetap VALID.*")
+            st.success("✅ KESIMPULAN: Wadah ini **NORMAL / VALID**!")
 
-        # KONDISI 2: JIKA JUARA 1 ADALAH CACAT -> MUTLAK CACAT
+        # KONDISI 2: JIKA PERINGKAT 1 ADALAH CACAT
         else:
             st.error("⚠️ KESIMPULAN: Wadah ini **CACAT / INVALID**!")
-            
-            # Cek apakah ada cacat yang beneran dominan (>= 50%)
-            cacat_dominan = [item for item in cacat_list if item[1] >= 60.0]
-            
-            if len(cacat_dominan) > 0:
-                # JIKA ADA CACAT DOMINAN: Tampilkan HANYA yang tembus >= 50%
-                st.write("Alasan Cacat Terdeteksi (Sangat Jelas):")
-                for nama_cacat, skor_cacat in cacat_dominan:
-                    st.write(f"🚨 **{nama_cacat}** ({skor_cacat:.1f}%)")
-            else:
-                # JIKA TIDAK ADA YANG TEMBUS 50%: Ambil Top 2 dugaan tertinggi
-                top_2_cacat = cacat_list[:2]
-                st.write("Alasan Cacat Terdeteksi (Dugaan Tertinggi):")
-                for nama_cacat, skor_cacat in top_2_cacat:
-                    st.write(f"🚨 **{nama_cacat}** ({skor_cacat:.1f}%)")
+
+            # Cek apakah ada cacat yang tembus >= 50%
+            ada_cacat_diatas_50 = any(skor >= 50.0 for _, skor in cacat_list)
+
+            # Jika TIDAK ADA cacat yang tembus 50%, cari yang nilainya >= 40%
+            if not ada_cacat_diatas_50:
+                alasan_cacat_40 = [(nama, skor) for nama, skor in cacat_list if skor >= 40.0]
+                
+                if alasan_cacat_40:
+                    st.write("Alasan Cacat Terdeteksi (Indikasi Cacat Tertinggi):")
+                    for nama_cacat, skor_cacat in alasan_cacat_40:
+                        st.write(f"🚨 **{nama_cacat}** ({skor_cacat:.1f}%)")
+
+    # Penutup blok try
     except Exception as e:
         st.error(f"Terjadi kesalahan saat memproses: {e}")
     finally:
